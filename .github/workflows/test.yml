@@ -1,0 +1,41 @@
+name: Test
+
+on: push
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    name: Smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-26.04
+          - ubuntu-24.04
+          - windows-2025
+          - windows-2022
+          - macos-15
+          - macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install: false
+          cache: false
+      - name: Test backend hooks
+        shell: bash
+        run: |
+          mise plugins link zephyr-sdk .
+
+          mise ls-remote "zephyr-sdk:full"
+          mise install "zephyr-sdk:full@0.0.0"
+          mise env "zephyr-sdk:full@0.0.0" --json
+          mise uninstall "zephyr-sdk:full@0.0.0"
+
+          mise ls-remote "zephyr-sdk:arm-zephyr-eabi"
+          mise install "zephyr-sdk:arm-zephyr-eabi@0.0.0"
+          mise env "zephyr-sdk:arm-zephyr-eabi@0.0.0" --json
+          mise uninstall "zephyr-sdk:arm-zephyr-eabi@0.0.0"

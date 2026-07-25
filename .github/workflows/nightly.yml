@@ -1,0 +1,35 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full:
+    name: Full installation (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install: false
+          cache: false
+      - shell: bash
+        run: |
+          mise plugins link zephyr-sdk .
+
+          mise ls-remote "zephyr-sdk:full"
+          mise install "zephyr-sdk:full@0.0.0"
+          mise env "zephyr-sdk:full@0.0.0" --json
+          mise uninstall "zephyr-sdk:full@0.0.0"
