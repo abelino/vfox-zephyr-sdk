@@ -30,6 +30,6 @@ jobs:
           mise plugins link zephyr-sdk .
 
           mise ls-remote "zephyr-sdk:full"
-          mise install "zephyr-sdk:full@0.0.0"
-          mise env "zephyr-sdk:full@0.0.0" --json
-          mise uninstall "zephyr-sdk:full@0.0.0"
+          mise install "zephyr-sdk:full@latest"
+          mise env "zephyr-sdk:full@latest" --json
+          mise uninstall "zephyr-sdk:full@latest"
