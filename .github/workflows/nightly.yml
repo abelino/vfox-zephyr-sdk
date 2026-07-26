@@ -31,5 +31,5 @@ jobs:
 
           mise ls-remote "zephyr-sdk:full"
           mise install "zephyr-sdk:full@latest"
-          mise env "zephyr-sdk:full@latest" --json
+          mise env "zephyr-sdk:full@latest"
           mise uninstall "zephyr-sdk:full@latest"
