@@ -1,29 +1,51 @@
-local cmd = require("cmd")
+local http = require("http")
 local info = require("info")
-local strings = require("strings")
+local json = require("json")
 local version = require("version")
 
 --- Returns all available Zephyr SDK versions
 --- @param ctx table Context provided by vfox
 --- @return table Available versions
 function PLUGIN:BackendListVersions(ctx)
-    local git_stdout = cmd.exec(
-        "git ls-remote --tags --refs --sort=version:refname " .. info.url,
-        { env = { GIT_TERMINAL_PROMPT = "0" }, timeout = 60 }
-    )
-
-    local lines = strings.split(strings.trim(git_stdout, "\n"), "\n")
     local versions = {}
+    local page = 1
+    local url = table.concat({
+        "https://api.github.com/repos",
+        info.org,
+        info.name,
+        "releases"
+    }, "/")
 
-    for _, line in ipairs(lines) do
-        local release_raw = line:match("^%x+%s+refs/tags/v(%d+%.%d+%.%d+)%s*$")
-        if release_raw ~= nil then
-            local release = version.new(release_raw)
-            if release > version.new("0.14.0") then
-                versions[#versions + 1] = tostring(release)
+    while true do
+        local response = http.get({ url = url .. "?per_page=100&page=" .. page })
+
+        assert(
+            response.status_code == 200,
+            "Could not fetch SDK releases: HTTP " .. response.status_code)
+
+        local releases, error = json.decode(response.body)
+        assert(releases, error)
+
+        for _, release in ipairs(releases) do
+            local release_raw = release.tag_name:match("^v(%d+%.%d+%.%d+)$")
+            if not release.draft and not release.prerelease and release_raw ~= nil then
+                local ver = version.new(release_raw)
+                if ver > version.new("0.14.0") then
+                    versions[#versions + 1] = tostring(ver)
+                end
             end
         end
+
+        if #releases < 100 then
+            break
+        end
+
+        page = page + 1
     end
+
+    table.sort(versions, function(a, b)
+        return version.new(a) < version.new(b)
+    end)
 
     return { versions = versions }
 end
